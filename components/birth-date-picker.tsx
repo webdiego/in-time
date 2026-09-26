@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { memo, useMemo, useRef, useState } from "react";
 import { CalendarIcon } from "lucide-react";
 import { enUS } from "react-day-picker/locale";
 import { Button } from "@/components/ui/button";
@@ -11,8 +11,18 @@ const toIso = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const fromIso = (iso: string) => (iso ? new Date(`${iso}T00:00:00`) : undefined);
 
-/** Birth date as an ISO `yyyy-mm-dd` string; month/year dropdowns make distant years one click away. */
-export function BirthDatePicker({
+/**
+ * Birth date as an ISO `yyyy-mm-dd` string; month/year dropdowns make distant
+ * years one click away.
+ *
+ * Memoized: its host page re-renders every second for an unrelated live
+ * clock elsewhere on the page, and by value none of this component's own
+ * props change nearly that often. Without memo, react-day-picker treated
+ * every one of those renders as a reason to recompute its months and
+ * remount the pickers — closing the native OS listbox before a click could
+ * land on it, and dropping keyboard focus from the Base UI one.
+ */
+export const BirthDatePicker = memo(function BirthDatePicker({
   id,
   value,
   onChange,
@@ -29,7 +39,17 @@ export function BirthDatePicker({
 }) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const selected = fromIso(value);
+  const selected = useMemo(() => fromIso(value), [value]);
+
+  // Stable references for react-day-picker: a fresh Date/object every render
+  // (even with the same values) reads to it as a reason to recompute its
+  // months, which remounted the year/month pickers several times a second
+  // as the page's live clock ticked — closing the native OS listbox before a
+  // click could land, and dropping keyboard focus from the Base UI one.
+  const todayYear = today.getFullYear();
+  const startMonth = useMemo(() => new Date(todayYear - 120, 0), [todayYear]);
+  const defaultMonth = useMemo(() => selected ?? new Date(todayYear - 30, 0), [selected, todayYear]);
+  const disabledMatcher = useMemo(() => ({ after: today }), [today]);
 
   // Base UI would return focus to the trigger only after the close animation,
   // stealing it from whatever field the user moved to in the meantime. Do it
@@ -74,10 +94,10 @@ export function BirthDatePicker({
           locale={enUS}
           captionLayout="dropdown"
           selected={selected}
-          defaultMonth={selected ?? new Date(today.getFullYear() - 30, 0)}
-          startMonth={new Date(today.getFullYear() - 120, 0)}
+          defaultMonth={defaultMonth}
+          startMonth={startMonth}
           endMonth={today}
-          disabled={{ after: today }}
+          disabled={disabledMatcher}
           onSelect={(d) => {
             if (!d) return;
             onChange(toIso(d));
@@ -88,4 +108,4 @@ export function BirthDatePicker({
       </PopoverContent>
     </Popover>
   );
-}
+});

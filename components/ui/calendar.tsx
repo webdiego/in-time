@@ -10,7 +10,47 @@ import {
 } from "react-day-picker"
 
 import { Button, buttonVariants } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon } from "lucide-react"
+
+// Month/year dropdown, as a Base UI Select instead of a native <select>: a native
+// select's OS-drawn listbox briefly blurs the page to <body>, which the Popover
+// this calendar lives in mistakes for "focus left the floating tree" and reacts
+// to by yanking focus back to itself — so picking a year never landed.
+type DropdownSlot = NonNullable<React.ComponentProps<typeof DayPicker>["components"]>["Dropdown"]
+const CalendarDropdown: DropdownSlot = ({ options, value, onChange, disabled, "aria-label": ariaLabel, className }) => {
+  const numericValue = value === undefined ? undefined : Number(value)
+  const selected = options?.find((option) => option.value === numericValue)
+  return (
+    <Select
+      items={options}
+      value={numericValue}
+      onValueChange={(next) => {
+        if (next == null) return
+        onChange?.({ target: { value: String(next) } } as React.ChangeEvent<HTMLSelectElement>)
+      }}
+      disabled={disabled}
+    >
+      <SelectTrigger
+        aria-label={ariaLabel}
+        size="sm"
+        className={cn(
+          "h-7 gap-1 rounded-(--cell-radius) border-none bg-transparent px-1.5 text-sm font-medium shadow-none hover:bg-accent",
+          className
+        )}
+      >
+        <SelectValue>{selected?.label}</SelectValue>
+      </SelectTrigger>
+      <SelectContent className="max-h-64">
+        {options?.map((option) => (
+          <SelectItem key={option.value} value={option.value} disabled={option.disabled}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  )
+}
 
 function Calendar({
   className,
@@ -50,18 +90,21 @@ function Calendar({
           defaultClassNames.months
         ),
         month: cn("flex w-full flex-col gap-4", defaultClassNames.month),
+        // The nav's own box spans the full caption row (to place the arrows at
+        // its far edges), so its empty middle would otherwise sit on top of
+        // and swallow clicks meant for the month/year dropdowns beneath it.
         nav: cn(
-          "absolute inset-x-0 top-0 flex w-full items-center justify-between gap-1",
+          "pointer-events-none absolute inset-x-0 top-0 flex w-full items-center justify-between gap-1",
           defaultClassNames.nav
         ),
         button_previous: cn(
           buttonVariants({ variant: buttonVariant }),
-          "size-(--cell-size) p-0 select-none aria-disabled:opacity-50",
+          "pointer-events-auto size-(--cell-size) p-0 select-none aria-disabled:opacity-50",
           defaultClassNames.button_previous
         ),
         button_next: cn(
           buttonVariants({ variant: buttonVariant }),
-          "size-(--cell-size) p-0 select-none aria-disabled:opacity-50",
+          "pointer-events-auto size-(--cell-size) p-0 select-none aria-disabled:opacity-50",
           defaultClassNames.button_next
         ),
         month_caption: cn(
@@ -173,6 +216,7 @@ function Calendar({
             </td>
           )
         },
+        Dropdown: CalendarDropdown,
         ...components,
       }}
       {...props}
@@ -218,4 +262,4 @@ function CalendarDayButton({
   )
 }
 
-export { Calendar, CalendarDayButton }
+export { Calendar, CalendarDayButton, CalendarDropdown }

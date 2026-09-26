@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, type FormEvent } from "react";
+import { useId, useMemo, useState, type FormEvent } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,7 +48,11 @@ export function ProfileForm({ now, initial, onDone }: { now: number; initial?: P
   const [work, setWork] = useState(initial?.workHoursPerWeek?.toString() ?? "");
   const [retirement, setRetirement] = useState(initial?.retirementAge?.toString() ?? "");
   const [showErrors, setShowErrors] = useState(false);
-  const today = new Date(now);
+  // Recreated only when the local calendar day actually changes, not on every
+  // clock tick: react-day-picker treats a new Date reference here as a reason
+  // to recompute its months, which was remounting the year/month pickers ~4x/s.
+  const localDay = new Date(now).toDateString();
+  const today = useMemo(() => new Date(localDay), [localDay]);
 
   const bmi = bmiFrom(Number(height), Number(weight));
   const answered =
