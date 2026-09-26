@@ -114,8 +114,8 @@ export function ProfileForm({ now, initial, onDone }: { now: number; initial?: P
           {birthDate ? <span className="text-glow">Ready</span> : "Awaiting input"}
         </span>
       </header>
-      <form onSubmit={onSubmit} className="flex flex-col gap-7 p-6 sm:p-8">
-        <div className="grid gap-7 sm:grid-cols-2 sm:gap-6">
+      <form onSubmit={onSubmit} className="@container flex flex-col gap-7 p-6 sm:p-8">
+        <div className="grid gap-7 @md:grid-cols-2 @md:gap-6">
           <div className="flex flex-col gap-2">
             <Label htmlFor={`${ids}-birth`} className="label gap-0">
               <span className="step-index mr-2">01</span>Date of birth
@@ -173,7 +173,7 @@ export function ProfileForm({ now, initial, onDone }: { now: number; initial?: P
               </span>
             </AccordionTrigger>
             <AccordionContent className="flex h-auto flex-col gap-7 pt-2 pb-5">
-              <div className="grid gap-7 sm:grid-cols-2 sm:gap-x-6">
+              <div className="grid gap-7 @lg:grid-cols-2 @lg:gap-x-6">
                 {askedFactors.map((f) => (
                   <LifestyleQuestion
                     key={f.id}

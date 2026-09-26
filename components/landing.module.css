@@ -1,0 +1,119 @@
+/*
+ * Hero "Start" transition: the facts panel retracts upward and the form deploys
+ * downward in its place, each as a stepped shutter with a glowing seam at the
+ * moving edge. One animatable custom property drives both the clip and the
+ * seam's position, so the line always sits exactly on the cut.
+ */
+
+@property --reveal {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 100%;
+}
+
+.shutter {
+  position: relative;
+}
+
+/* Clipped only while moving: at rest a clip would shave the panel's reticle
+   corners, which sit 1px outside its box. */
+.retracting,
+.deploying {
+  clip-path: inset(-3px -3px calc(100% - var(--reveal)) -3px);
+}
+
+/* The seam: only visible while the shutter moves. */
+.shutter::after {
+  content: "";
+  position: absolute;
+  inset-inline: -1px;
+  top: calc(var(--reveal) - 2px);
+  height: 2px;
+  background: var(--glow);
+  box-shadow:
+    0 0 10px var(--glow),
+    0 0 28px rgb(61 255 110 / 0.6);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.retracting {
+  animation:
+    retract 460ms steps(9, jump-end) forwards,
+    glitch 160ms steps(4, jump-end);
+}
+.retracting::after {
+  opacity: 1;
+}
+
+.deploying {
+  --reveal: 0%;
+  animation:
+    deploy 720ms steps(14, jump-end) forwards,
+    flicker 300ms steps(5, jump-end);
+}
+.deploying::after {
+  opacity: 1;
+}
+
+@keyframes retract {
+  from {
+    --reveal: 100%;
+  }
+  to {
+    --reveal: 0%;
+  }
+}
+
+@keyframes deploy {
+  from {
+    --reveal: 0%;
+  }
+  to {
+    --reveal: 100%;
+  }
+}
+
+@keyframes glitch {
+  25% {
+    transform: translateX(-4px);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+  75% {
+    transform: translateX(-1px);
+  }
+}
+
+@keyframes flicker {
+  20% {
+    opacity: 0.55;
+  }
+  40% {
+    opacity: 1;
+  }
+  60% {
+    opacity: 0.75;
+  }
+}
+
+/* Columns hand the space over to the form as it deploys. */
+.stage {
+  transition: grid-template-columns 520ms steps(8, jump-end);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .retracting,
+  .deploying {
+    animation: none;
+    --reveal: 100%;
+  }
+  .retracting::after,
+  .deploying::after {
+    opacity: 0;
+  }
+  .stage {
+    transition: none;
+  }
+}
