@@ -7,27 +7,33 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  /* Light: warm paper and green-tinted inks instead of neutral greys, so the
+     page reads as the same world as the dark theme, just in daylight. */
   --glow: #15803d;
-  --background: #ffffff;
-  --foreground: #18181b;
-  --card: #fafafa;
-  --card-foreground: #18181b;
+  --background: #f5f6f1;
+  --foreground: #0d1f14;
+  --card: #ffffff;
+  --card-foreground: #0d1f14;
   --popover: #ffffff;
-  --popover-foreground: #18181b;
+  --popover-foreground: #0d1f14;
   --primary: var(--glow);
   --primary-foreground: #ffffff;
-  --secondary: #f4f4f5;
-  --secondary-foreground: #18181b;
-  --muted: #f4f4f5;
-  --muted-foreground: #52525b;
-  --accent: #f0fdf4;
-  --accent-foreground: #14532d;
-  --destructive: #dc2626;
-  --border: #e4e4e7;
-  --input: #e4e4e7;
+  --secondary: #e8ece3;
+  --secondary-foreground: #0d1f14;
+  --muted: #e8ece3;
+  --muted-foreground: #4f5d53;
+  --accent: #e3f1e6;
+  --accent-foreground: #0d3b1e;
+  --destructive: #c53030;
+  --border: #d9dfd4;
+  --input: #d3dacd;
   --ring: var(--glow);
   --radius: 0.625rem;
-  --grid-line: rgb(21 128 61 / 0.08);
+  --grid-line: rgb(21 128 61 / 0.09);
+  /* Context series in charts; both ≥ 3:1 on the page and apart from the green. */
+  --chart-context: #6b7d70;
+  --seg-sleep: #1f3a2a;
+  --seg-work: #6b7d70;
 }
 
 .dark {
@@ -50,6 +56,9 @@
   --border: #27272a;
   --input: #27272a;
   --grid-line: rgb(61 255 110 / 0.07);
+  --chart-context: #71717a;
+  --seg-sleep: #71717a;
+  --seg-work: #a1a1aa;
 }
 
 @theme inline {
@@ -96,7 +105,7 @@
   }
   body {
     background:
-      radial-gradient(ellipse 80% 50% at 50% 0%, rgb(21 128 61 / 0.05), transparent 70%),
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgb(21 128 61 / 0.08), transparent 70%),
       var(--background);
     background-repeat: no-repeat;
     @apply text-foreground;

@@ -9,6 +9,11 @@ export type Profile = {
   lifestyle: Lifestyle;
   heightCm?: number;
   weightKg?: number;
+  /** Left empty: sleep counts as 8 h for the time budget and isn't a risk factor. */
+  sleepHours?: number;
+  /** Left empty: no work is subtracted. */
+  workHoursPerWeek?: number;
+  retirementAge?: number;
 };
 
 const STORAGE_KEY = "in-time:profile";

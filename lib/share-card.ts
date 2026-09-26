@@ -4,7 +4,7 @@ const W = 1080;
 const H = 1350;
 const GLOW = "#3dff6e";
 
-type Card = { time: Duration; usedPct: number; subtitle: string };
+type Card = { time: Duration; usedPct: number; subtitle: string; heading?: string };
 
 function cssFont(variable: string, fallback: string) {
   const value = getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
@@ -12,7 +12,7 @@ function cssFont(variable: string, fallback: string) {
 }
 
 /** Renders the clock as a portrait PNG (Instagram-story friendly). */
-export async function renderShareCard({ time, usedPct, subtitle }: Card): Promise<Blob> {
+export async function renderShareCard({ time, usedPct, subtitle, heading = "The time I have left" }: Card): Promise<Blob> {
   const mono = cssFont("--font-clock", "monospace");
   const sans = cssFont("--font-geist-sans", "system-ui, sans-serif");
   await Promise.all([document.fonts.load(`160px ${mono}`), document.fonts.load(`40px ${sans}`)]);
@@ -45,7 +45,7 @@ export async function renderShareCard({ time, usedPct, subtitle }: Card): Promis
   glowText("IN TIME", W / 2, 190, `64px ${mono}`, 18);
   ctx.font = `30px ${sans}`;
   ctx.fillStyle = "#a1a1aa";
-  ctx.fillText("The time I have left, according to today's data", W / 2, 250);
+  ctx.fillText(`${heading}, according to today's data`, W / 2, 250);
 
   // Big clock: years and days on the first line, hh:mm:ss on the second.
   const units: [string, string][] = [

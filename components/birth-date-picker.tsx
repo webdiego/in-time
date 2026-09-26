@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { CalendarIcon } from "lucide-react";
 import { enUS } from "react-day-picker/locale";
 import { Button } from "@/components/ui/button";
@@ -28,13 +28,27 @@ export function BirthDatePicker({
   describedBy?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const selected = fromIso(value);
 
+  // Base UI would return focus to the trigger only after the close animation,
+  // stealing it from whatever field the user moved to in the meantime. Do it
+  // ourselves, synchronously, and only if focus is still inside the calendar.
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (next) return;
+    const active = document.activeElement;
+    if (!active || active === document.body || active.closest("[data-slot=popover-content]")) {
+      triggerRef.current?.focus();
+    }
+  }
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger
         render={
           <Button
+            ref={triggerRef}
             id={id}
             variant="outline"
             aria-invalid={invalid || undefined}
@@ -50,7 +64,11 @@ export function BirthDatePicker({
         </span>
         <CalendarIcon className="text-muted-foreground" aria-hidden />
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent
+        className="w-auto p-0"
+        align="start"
+        finalFocus={false}
+      >
         <Calendar
           mode="single"
           locale={enUS}
@@ -63,7 +81,7 @@ export function BirthDatePicker({
           onSelect={(d) => {
             if (!d) return;
             onChange(toIso(d));
-            setOpen(false);
+            handleOpenChange(false);
           }}
           className="rounded-lg"
         />

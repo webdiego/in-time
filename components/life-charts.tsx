@@ -23,7 +23,7 @@ import { notableCountries } from "@/lib/lifespan";
 import { countryName, fmtYears } from "@/lib/format";
 
 const GLOW = "var(--glow)";
-const CONTEXT = "#71717a";
+const CONTEXT = "var(--chart-context)";
 const pct = (p: number) => `${Math.round(p * 100)}%`;
 const ageTicks = (from: number) => {
   const ticks = [from];

@@ -9,7 +9,7 @@
  * inactivity and weight are correlated), so the total is clamped.
  */
 
-export type FactorId = "smoking" | "activity" | "bmi";
+export type FactorId = "smoking" | "activity" | "alcohol" | "diet" | "social" | "sleep" | "bmi";
 
 type Option = { id: string; label: string; hint?: string; hr: number; share: number };
 
@@ -19,6 +19,8 @@ type Factor = {
   question: string;
   source: string;
   options: Option[];
+  /** Filled from a number the user types (BMI, sleep hours) rather than asked as a multiple choice. */
+  derived?: true;
 };
 
 export const factors: Factor[] = [
@@ -47,10 +49,60 @@ export const factors: Factor[] = [
     ],
   },
   {
+    id: "alcohol",
+    title: "Alcohol",
+    question: "How much alcohol do you drink?",
+    // Wood et al. studied current drinkers; 100 g of alcohol ≈ 7 standard (14 g) drinks.
+    source: "Wood et al., The Lancet 2018",
+    options: [
+      { id: "low", label: "None or little", hint: "up to 7 drinks a week", hr: 1, share: 0.65 },
+      { id: "moderate", label: "Moderate", hint: "7–14 drinks a week", hr: 1.07, share: 0.18 },
+      { id: "heavy", label: "Heavy", hint: "14–25 drinks a week", hr: 1.19, share: 0.11 },
+      { id: "very-heavy", label: "Very heavy", hint: "more than 25 drinks a week", hr: 1.37, share: 0.06 },
+    ],
+  },
+  {
+    id: "diet",
+    title: "Fruit & vegetables",
+    question: "Portions of fruit and vegetables a day?",
+    // A portion is about 80 g; the meta-analysis reports ~10% lower risk per 200 g/day.
+    source: "Aune et al., International Journal of Epidemiology 2017",
+    options: [
+      { id: "0-1", label: "0–1 portions", hr: 1, share: 0.3 },
+      { id: "2-4", label: "2–4 portions", hr: 0.88, share: 0.5 },
+      { id: "5+", label: "5 or more", hr: 0.8, share: 0.2 },
+    ],
+  },
+  {
+    id: "social",
+    title: "Social connection",
+    question: "How connected do you feel to other people?",
+    source: "Holt-Lunstad et al., Perspectives on Psychological Science 2015",
+    options: [
+      { id: "connected", label: "Well connected", hr: 1, share: 0.6 },
+      { id: "sometimes", label: "Sometimes lonely", hr: 1.13, share: 0.25 },
+      { id: "isolated", label: "Often lonely or isolated", hr: 1.27, share: 0.15 },
+    ],
+  },
+  {
+    id: "sleep",
+    title: "Sleep",
+    question: "Hours of sleep a night",
+    source: "Cappuccio et al., Sleep 2010",
+    derived: true,
+    options: [
+      { id: "<6", label: "Short sleep", hint: "under 6 hours", hr: 1.12, share: 0.12 },
+      { id: "6-7", label: "A bit short", hint: "6–7 hours", hr: 1.06, share: 0.25 },
+      { id: "7-9", label: "Recommended", hint: "7–9 hours", hr: 1, share: 0.55 },
+      { id: "9+", label: "Long sleep", hint: "over 9 hours", hr: 1.3, share: 0.08 },
+    ],
+  },
+  {
     id: "bmi",
     title: "Weight",
     question: "Your body mass index",
     source: "Global BMI Mortality Collaboration, The Lancet 2016",
+    derived: true,
     options: [
       { id: "<18.5", label: "Underweight", hr: 1.51, share: 0.02 },
       { id: "18.5-20", label: "Low-normal weight", hr: 1.13, share: 0.06 },
@@ -96,6 +148,13 @@ export function bmiBand(bmi: number): string {
   if (bmi < 35) return "30-35";
   if (bmi < 40) return "35-40";
   return "40+";
+}
+
+export function sleepBand(hours: number): string {
+  if (hours < 6) return "<6";
+  if (hours < 7) return "6-7";
+  if (hours <= 9) return "7-9";
+  return "9+";
 }
 
 export function optionLabel(id: FactorId, optionId: string | undefined): string | undefined {

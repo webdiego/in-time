@@ -9,11 +9,22 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { BirthDatePicker } from "@/components/birth-date-picker";
 import { CountryCombobox } from "@/components/country-combobox";
 import { findCountry, type Sex } from "@/lib/lifespan";
-import { bmiBand, bmiFrom, factors, optionLabel, type FactorId, type Lifestyle } from "@/lib/lifestyle";
+import { bmiBand, bmiFrom, factors, optionLabel, sleepBand, type FactorId, type Lifestyle } from "@/lib/lifestyle";
+import { DEFAULT_RETIREMENT_AGE, DEFAULT_SLEEP_HOURS, weekFits } from "@/lib/time-budget";
 import { saveProfile, type Profile } from "@/lib/profile";
 
 // Must not collide with any option id in lib/lifestyle.ts.
 const NO_ANSWER = "__skip";
+
+// Asked as multiple choice; the derived ones (BMI, sleep) come from numbers typed elsewhere.
+const askedFactors = factors.filter((f) => !f.derived);
+
+/** Parses an optional numeric field: empty → undefined, out of range → NaN. */
+function optionalNumber(raw: string, min: number, max: number): number | undefined {
+  if (raw.trim() === "") return undefined;
+  const n = Number(raw);
+  return n >= min && n <= max ? n : NaN;
+}
 
 function guessCountry(): string {
   for (const lang of navigator.languages ?? [navigator.language]) {
@@ -28,27 +39,47 @@ export function ProfileForm({ now, initial, onDone }: { now: number; initial?: P
   const [birthDate, setBirthDate] = useState(initial?.birthDate ?? "");
   const [country, setCountry] = useState(() => initial?.country ?? guessCountry());
   const [sex, setSex] = useState<Sex>(initial?.sex ?? "male");
-  const [smoking, setSmoking] = useState(initial?.lifestyle.smoking ?? NO_ANSWER);
-  const [activity, setActivity] = useState(initial?.lifestyle.activity ?? NO_ANSWER);
+  const [answers, setAnswers] = useState<Partial<Record<FactorId, string>>>(() =>
+    Object.fromEntries(askedFactors.map((f) => [f.id, initial?.lifestyle[f.id] ?? NO_ANSWER])),
+  );
   const [height, setHeight] = useState(initial?.heightCm?.toString() ?? "");
   const [weight, setWeight] = useState(initial?.weightKg?.toString() ?? "");
+  const [sleep, setSleep] = useState(initial?.sleepHours?.toString() ?? "");
+  const [work, setWork] = useState(initial?.workHoursPerWeek?.toString() ?? "");
+  const [retirement, setRetirement] = useState(initial?.retirementAge?.toString() ?? "");
   const [showErrors, setShowErrors] = useState(false);
   const today = new Date(now);
 
   const bmi = bmiFrom(Number(height), Number(weight));
-  const answered = [smoking !== NO_ANSWER, activity !== NO_ANSWER, bmi !== null].filter(Boolean).length;
+  const answered =
+    askedFactors.filter((f) => answers[f.id] !== NO_ANSWER).length + (bmi !== null ? 1 : 0);
+  const totalQuestions = askedFactors.length + 1;
+
+  const sleepHours = optionalNumber(sleep, 3, 14);
+  const workHours = optionalNumber(work, 0, 100);
+  const retirementAge = optionalNumber(retirement, 40, 90);
+  const weekError =
+    Number.isNaN(sleepHours)
+      ? "Sleep must be between 3 and 14 hours."
+      : Number.isNaN(workHours)
+        ? "Work must be between 0 and 100 hours a week."
+        : Number.isNaN(retirementAge)
+          ? "Retirement age must be between 40 and 90."
+          : !weekFits(sleepHours ?? DEFAULT_SLEEP_HOURS, workHours ?? 0)
+            ? "Sleep and work add up to more hours than a week has."
+            : null;
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!birthDate) {
+    if (!birthDate || weekError) {
       setShowErrors(true);
-      document.getElementById(`${ids}-birth`)?.focus();
+      document.getElementById(!birthDate ? `${ids}-birth` : `${ids}-sleep`)?.focus();
       return;
     }
     const lifestyle: Lifestyle = {};
-    if (smoking !== NO_ANSWER) lifestyle.smoking = smoking;
-    if (activity !== NO_ANSWER) lifestyle.activity = activity;
+    for (const f of askedFactors) if (answers[f.id] !== NO_ANSWER) lifestyle[f.id] = answers[f.id];
     if (bmi !== null) lifestyle.bmi = bmiBand(bmi);
+    if (sleepHours !== undefined) lifestyle.sleep = sleepBand(sleepHours);
     saveProfile({
       birthDate,
       country,
@@ -56,6 +87,9 @@ export function ProfileForm({ now, initial, onDone }: { now: number; initial?: P
       lifestyle,
       heightCm: bmi !== null ? Number(height) : undefined,
       weightKg: bmi !== null ? Number(weight) : undefined,
+      sleepHours,
+      workHoursPerWeek: workHours,
+      retirementAge,
     });
     onDone?.();
   }
@@ -121,7 +155,11 @@ export function ProfileForm({ now, initial, onDone }: { now: number; initial?: P
               <span className="flex flex-col gap-1">
                 <span className="flex items-center gap-2">
                   <span className="step-index text-sm">04</span> Lifestyle
-                  {answered > 0 && <span className="text-glow">· {answered}/3</span>}
+                  {answered > 0 && (
+                    <span className="text-glow">
+                      · {answered}/{totalQuestions}
+                    </span>
+                  )}
                 </span>
                 <span className="text-sm font-normal text-muted-foreground">
                   Optional. Makes the estimate personal instead of average.
@@ -129,8 +167,14 @@ export function ProfileForm({ now, initial, onDone }: { now: number; initial?: P
               </span>
             </AccordionTrigger>
             <AccordionContent className="flex h-auto flex-col gap-7 pt-2 pb-5">
-              <LifestyleQuestion id="smoking" value={smoking} onChange={setSmoking} />
-              <LifestyleQuestion id="activity" value={activity} onChange={setActivity} />
+              {askedFactors.map((f) => (
+                <LifestyleQuestion
+                  key={f.id}
+                  id={f.id}
+                  value={answers[f.id] ?? NO_ANSWER}
+                  onChange={(v) => setAnswers((a) => ({ ...a, [f.id]: v }))}
+                />
+              ))}
 
               <fieldset className="flex flex-col gap-3">
                 <legend className="label mb-3">Weight</legend>
@@ -177,6 +221,58 @@ export function ProfileForm({ now, initial, onDone }: { now: number; initial?: P
           </AccordionItem>
         </Accordion>
 
+        <fieldset className="flex flex-col gap-3" aria-describedby={`${ids}-week-hint`}>
+          <legend className="label mb-3">
+            <span className="step-index mr-2">05</span>Your week
+          </legend>
+          <p id={`${ids}-week-hint`} className="-mt-1 text-sm text-muted-foreground">
+            Optional. Subtracts sleep and work to show the time that&apos;s actually yours.
+          </p>
+          <div className="grid grid-cols-3 gap-3">
+            <NumberField
+              id={`${ids}-sleep`}
+              label="Sleep (h/night)"
+              value={sleep}
+              onChange={setSleep}
+              placeholder={String(DEFAULT_SLEEP_HOURS)}
+              min={3}
+              max={14}
+              step="0.5"
+              invalid={showErrors && (Number.isNaN(sleepHours) || weekError?.startsWith("Sleep and"))}
+            />
+            <NumberField
+              id={`${ids}-work`}
+              label="Work (h/week)"
+              value={work}
+              onChange={setWork}
+              placeholder="0"
+              min={0}
+              max={100}
+              invalid={showErrors && (Number.isNaN(workHours) || weekError?.startsWith("Sleep and"))}
+            />
+            <NumberField
+              id={`${ids}-retire`}
+              label="Retire at"
+              value={retirement}
+              onChange={setRetirement}
+              placeholder={String(DEFAULT_RETIREMENT_AGE)}
+              min={40}
+              max={90}
+              invalid={showErrors && Number.isNaN(retirementAge)}
+            />
+          </div>
+          <p
+            className={`text-sm ${showErrors && weekError ? "text-destructive" : "text-muted-foreground"}`}
+            role={showErrors && weekError ? "alert" : undefined}
+          >
+            {showErrors && weekError
+              ? weekError
+              : sleepHours !== undefined && !Number.isNaN(sleepHours)
+                ? `${optionLabel("sleep", sleepBand(sleepHours))} · also used in the estimate`
+                : "Leave blank to skip. Sleep unlocks your waking time, sleep + work your free time."}
+          </p>
+        </fieldset>
+
         <Button type="submit" className="cta mt-2 h-12 rounded-full">
           {initial ? "Update my time" : "Show me my time"}
         </Button>
@@ -187,6 +283,49 @@ export function ProfileForm({ now, initial, onDone }: { now: number; initial?: P
         )}
       </form>
     </section>
+  );
+}
+
+function NumberField({
+  id,
+  label,
+  value,
+  onChange,
+  placeholder,
+  min,
+  max,
+  step,
+  invalid,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  min: number;
+  max: number;
+  step?: string;
+  invalid?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <Label htmlFor={id} className="text-xs text-muted-foreground">
+        {label}
+      </Label>
+      <Input
+        id={id}
+        type="number"
+        inputMode="decimal"
+        min={min}
+        max={max}
+        step={step}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-invalid={invalid || undefined}
+        className="h-11 bg-card px-3 font-mono text-base md:text-base"
+      />
+    </div>
   );
 }
 
