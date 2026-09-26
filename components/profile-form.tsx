@@ -99,7 +99,7 @@ export function ProfileForm({ now, initial, onDone }: { now: number; initial?: P
   }
 
   return (
-    <section className="hud-frame mx-auto w-full max-w-md" aria-labelledby="profile-heading">
+    <section className="hud-frame mx-auto w-full max-w-3xl" aria-labelledby="profile-heading">
       <header className="flex items-center justify-between gap-4 border-b border-border px-6 py-3 sm:px-8">
         <h2
           id="profile-heading"
@@ -115,30 +115,32 @@ export function ProfileForm({ now, initial, onDone }: { now: number; initial?: P
         </span>
       </header>
       <form onSubmit={onSubmit} className="flex flex-col gap-7 p-6 sm:p-8">
-        <div className="flex flex-col gap-2">
-          <Label htmlFor={`${ids}-birth`} className="label gap-0">
-            <span className="step-index mr-2">01</span>Date of birth
-          </Label>
-          <BirthDatePicker
-            id={`${ids}-birth`}
-            value={birthDate}
-            onChange={setBirthDate}
-            today={today}
-            invalid={showErrors && !birthDate}
-            describedBy={showErrors && !birthDate ? `${ids}-birth-error` : undefined}
-          />
-          {showErrors && !birthDate && (
-            <p id={`${ids}-birth-error`} className="text-sm text-destructive" role="alert">
-              Pick your date of birth.
-            </p>
-          )}
-        </div>
+        <div className="grid gap-7 sm:grid-cols-2 sm:gap-6">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor={`${ids}-birth`} className="label gap-0">
+              <span className="step-index mr-2">01</span>Date of birth
+            </Label>
+            <BirthDatePicker
+              id={`${ids}-birth`}
+              value={birthDate}
+              onChange={setBirthDate}
+              today={today}
+              invalid={showErrors && !birthDate}
+              describedBy={showErrors && !birthDate ? `${ids}-birth-error` : undefined}
+            />
+            {showErrors && !birthDate && (
+              <p id={`${ids}-birth-error`} className="text-sm text-destructive" role="alert">
+                Pick your date of birth.
+              </p>
+            )}
+          </div>
 
-        <div className="flex flex-col gap-2">
-          <Label htmlFor={`${ids}-country`} className="label gap-0">
-            <span className="step-index mr-2">02</span>Where you live
-          </Label>
-          <CountryCombobox id={`${ids}-country`} value={country} onChange={setCountry} />
+          <div className="flex flex-col gap-2">
+            <Label htmlFor={`${ids}-country`} className="label gap-0">
+              <span className="step-index mr-2">02</span>Where you live
+            </Label>
+            <CountryCombobox id={`${ids}-country`} value={country} onChange={setCountry} />
+          </div>
         </div>
 
         <ChoiceGroup
@@ -171,18 +173,20 @@ export function ProfileForm({ now, initial, onDone }: { now: number; initial?: P
               </span>
             </AccordionTrigger>
             <AccordionContent className="flex h-auto flex-col gap-7 pt-2 pb-5">
-              {askedFactors.map((f) => (
-                <LifestyleQuestion
-                  key={f.id}
-                  id={f.id}
-                  value={answers[f.id] ?? NO_ANSWER}
-                  onChange={(v) => setAnswers((a) => ({ ...a, [f.id]: v }))}
-                />
-              ))}
+              <div className="grid gap-7 sm:grid-cols-2 sm:gap-x-6">
+                {askedFactors.map((f) => (
+                  <LifestyleQuestion
+                    key={f.id}
+                    id={f.id}
+                    value={answers[f.id] ?? NO_ANSWER}
+                    onChange={(v) => setAnswers((a) => ({ ...a, [f.id]: v }))}
+                  />
+                ))}
+              </div>
 
               <fieldset className="flex flex-col gap-3">
                 <legend className="label mb-3">Weight</legend>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid max-w-sm grid-cols-2 gap-3">
                   <div className="flex flex-col gap-2">
                     <Label htmlFor={`${ids}-height`} className="text-muted-foreground">
                       Height (cm)
@@ -340,10 +344,8 @@ function LifestyleQuestion({ id, value, onChange }: { id: FactorId; value: strin
       legend={factor.question}
       value={value}
       onChange={onChange}
-      options={[
-        ...factor.options.map((o) => ({ value: o.id, label: o.label, hint: o.hint })),
-        { value: NO_ANSWER, label: "Prefer not to say" },
-      ]}
+      options={factor.options.map((o) => ({ value: o.id, label: o.label, hint: o.hint }))}
+      skipValue={NO_ANSWER}
     />
   );
 }
@@ -355,6 +357,8 @@ function ChoiceGroup({
   onChange,
   options,
   columns = 1,
+  skipValue,
+  skipLabel = "Prefer not to say",
 }: {
   step?: string;
   legend: string;
@@ -362,6 +366,9 @@ function ChoiceGroup({
   onChange: (value: string) => void;
   options: { value: string; label: string; hint?: string }[];
   columns?: 1 | 2;
+  /** Rendered as a slim toggle spanning the full width, instead of a card matching the others. */
+  skipValue?: string;
+  skipLabel?: string;
 }) {
   const ids = useId();
   return (
@@ -384,6 +391,12 @@ function ChoiceGroup({
             </span>
           </label>
         ))}
+        {skipValue && (
+          <label className={`choice-compact${columns === 2 ? " col-span-2" : ""}`}>
+            <RadioGroupItem value={skipValue} />
+            <span>{skipLabel}</span>
+          </label>
+        )}
       </RadioGroup>
     </fieldset>
   );

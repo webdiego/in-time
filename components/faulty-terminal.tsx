@@ -305,6 +305,7 @@ export default function FaultyTerminal({
   const tintVec = useMemo(() => hexToRgb(tint), [tint]);
 
   const ditherValue = useMemo(() => (typeof dither === "boolean" ? (dither ? 1 : 0) : dither), [dither]);
+  const [gridMulX, gridMulY] = gridMul;
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     const ctn = containerRef.current;
@@ -441,12 +442,20 @@ export default function FaultyTerminal({
       loadAnimationStartRef.current = 0;
       timeOffsetRef.current = Math.random() * 100;
     };
+    // Depend on the two numbers, not the `gridMul` array reference: a caller
+    // that doesn't memoize its own array literal (including this component's
+    // own default parameter, `[2, 1]` freshly created on every call) would
+    // otherwise make this effect tear down and rebuild the whole WebGL scene
+    // on every single render — visible as the animation stuttering and
+    // restarting from scratch instead of running smoothly.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     dpr,
     pause,
     timeScale,
     scale,
-    gridMul,
+    gridMulX,
+    gridMulY,
     digitSize,
     scanlineIntensity,
     glitchAmount,

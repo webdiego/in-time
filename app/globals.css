@@ -158,6 +158,23 @@
     color: var(--glow);
   }
 
+  /* Slim variant for a low-stakes "skip" choice: no card, so six of these in
+     a row (one per lifestyle question) don't cost as much scroll as the
+     real options they sit alongside. */
+  .choice-compact {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+    padding: 0.35rem 0.1rem;
+    color: var(--muted-foreground);
+    font-size: 0.8125rem;
+    transition: color 150ms ease;
+  }
+  .choice-compact:has([data-checked]) {
+    color: var(--glow);
+  }
+
   .cta {
     padding-inline: 1.5rem;
     font-size: 1rem;
