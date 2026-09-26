@@ -188,7 +188,7 @@ export function LifeClock({
               <ToggleGroupItem
                 key={m.id}
                 value={m.id}
-                className="h-8 rounded-full px-4 font-mono text-xs tracking-[0.14em] uppercase aria-pressed:bg-glow aria-pressed:text-primary-foreground dark:aria-pressed:bg-secondary dark:aria-pressed:text-glow"
+                className="h-8 rounded-full px-4 font-mono text-xs tracking-[0.14em] uppercase aria-pressed:bg-secondary aria-pressed:text-glow"
               >
                 {m.label}
               </ToggleGroupItem>
