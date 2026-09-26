@@ -46,7 +46,15 @@ export function HeroBackground() {
       flickerAmount={0.35}
       scanlineIntensity={0.25}
       curvature={0.15}
-      chromaticAberration={dark ? 0.4 : 0}
+      // Performance: the shader runs ~10 noise-heavy samples per pixel, so cost
+      // scales with pixel count. Rendering at 0.75x CSS resolution (not the
+      // retina 2x default) cuts pixels ~7x on a HiDPI screen; the pattern is
+      // coarse blocks anyway, so the softer upscale doesn't read as blur.
+      // Chromatic aberration would triple the per-pixel work for a barely
+      // visible fringe, and 30 fps is indistinguishable at this slow timeScale.
+      dpr={0.75}
+      maxFps={30}
+      chromaticAberration={0}
       mouseStrength={0.15}
       dither={dark ? 0.3 : 0}
     />

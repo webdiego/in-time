@@ -40,6 +40,8 @@ export interface FaultyTerminalProps extends HTMLAttributes<HTMLDivElement> {
   dpr?: number;
   pageLoadAnimation?: boolean;
   brightness?: number;
+  /** Cap on frames rendered per second; the shader is expensive per pixel. Uncapped when omitted. */
+  maxFps?: number;
   lightMode?: boolean;
 }
 
@@ -206,8 +208,9 @@ vec3 getColor(vec2 p){
     float middle = digit(p);
 
     const float off = 0.002;
+    // The centre tap is the same sample as middle: reuse it instead of recomputing.
     float sum = digit(p + vec2(-off, -off)) + digit(p + vec2(0.0, -off)) + digit(p + vec2(off, -off)) +
-                digit(p + vec2(-off, 0.0)) + digit(p + vec2(0.0, 0.0)) + digit(p + vec2(off, 0.0)) +
+                digit(p + vec2(-off, 0.0)) + middle + digit(p + vec2(off, 0.0)) +
                 digit(p + vec2(-off, off)) + digit(p + vec2(0.0, off)) + digit(p + vec2(off, off));
 
     vec3 baseColor = vec3(0.9) * middle + sum * 0.1 * vec3(1.0) * bar;
@@ -287,6 +290,7 @@ export default function FaultyTerminal({
   dpr,
   pageLoadAnimation = true,
   brightness = 1,
+  maxFps,
   lightMode = false,
   className,
   style,
@@ -392,8 +396,14 @@ export default function FaultyTerminal({
     resizeObserver.observe(ctn);
     resize();
 
+    const minFrameMs = maxFps ? 1000 / maxFps : 0;
+    let lastFrame = -Infinity;
+
     const update = (t: number) => {
       rafRef.current = requestAnimationFrame(update);
+      // Small tolerance so a 60 Hz display capped at 30 fps reliably hits every other frame.
+      if (t - lastFrame < minFrameMs - 2) return;
+      lastFrame = t;
 
       if (pageLoadAnimation && loadAnimationStartRef.current === 0) {
         loadAnimationStartRef.current = t;
@@ -428,13 +438,27 @@ export default function FaultyTerminal({
 
       renderer.render({ scene: mesh });
     };
-    rafRef.current = requestAnimationFrame(update);
+    // Only animate while the container is on screen: scrolled past, the shader
+    // would otherwise keep the GPU busy drawing something nobody can see.
+    let running = false;
+    const start = () => {
+      if (running) return;
+      running = true;
+      rafRef.current = requestAnimationFrame(update);
+    };
+    const stop = () => {
+      running = false;
+      cancelAnimationFrame(rafRef.current);
+    };
+    const visibilityObserver = new IntersectionObserver(([entry]) => (entry.isIntersecting ? start() : stop()));
+    visibilityObserver.observe(ctn);
     ctn.appendChild(gl.canvas);
 
     if (mouseReact) ctn.addEventListener("mousemove", handleMouseMove);
 
     return () => {
-      cancelAnimationFrame(rafRef.current);
+      stop();
+      visibilityObserver.disconnect();
       resizeObserver.disconnect();
       if (mouseReact) ctn.removeEventListener("mousemove", handleMouseMove);
       if (gl.canvas.parentElement === ctn) ctn.removeChild(gl.canvas);
@@ -470,6 +494,7 @@ export default function FaultyTerminal({
     pageLoadAnimation,
     brightness,
     lightMode,
+    maxFps,
     handleMouseMove,
   ]);
 
