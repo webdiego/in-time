@@ -2,7 +2,9 @@
 
 import { useId, useMemo, useState, type FormEvent } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DialogClose, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -99,22 +101,28 @@ export function ProfileForm({ now, initial, onDone }: { now: number; initial?: P
   }
 
   return (
-    <section className="hud-frame mx-auto w-full max-w-3xl" aria-labelledby="profile-heading">
-      <header className="flex items-center justify-between gap-4 border-b border-border px-6 py-3 sm:px-8">
-        <h2
-          id="profile-heading"
-          className="font-mono text-xs tracking-[0.14em] whitespace-nowrap text-muted-foreground uppercase"
-        >
+    // Rendered inside ProfileDialog: the header stays put, only the form body scrolls.
+    <div className="hud-frame flex max-h-[calc(100svh-1rem)] w-full flex-col bg-card/95 sm:max-h-[calc(100svh-4rem)]">
+      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-border py-2 pr-2 pl-6 sm:pl-8">
+        <DialogTitle className="font-mono text-xs font-normal tracking-[0.14em] whitespace-nowrap text-muted-foreground uppercase">
           {initial ? "Edit profile" : "Calibrate clock"}
-        </h2>
-        <span
-          className="font-mono text-xs tracking-[0.14em] whitespace-nowrap text-muted-foreground uppercase"
-          aria-hidden
-        >
-          {birthDate ? <span className="text-glow">Ready</span> : "Awaiting input"}
-        </span>
+        </DialogTitle>
+        <div className="flex items-center gap-3">
+          <span
+            className="font-mono text-xs tracking-[0.14em] whitespace-nowrap text-muted-foreground uppercase"
+            aria-hidden
+          >
+            {birthDate ? <span className="text-glow">Ready</span> : "Awaiting input"}
+          </span>
+          <DialogClose render={<Button variant="ghost" size="icon-sm" aria-label="Close" />}>
+            <XIcon aria-hidden />
+          </DialogClose>
+        </div>
       </header>
-      <form onSubmit={onSubmit} className="@container flex flex-col gap-7 p-6 sm:p-8">
+      <form
+        onSubmit={onSubmit}
+        className="@container flex min-h-0 flex-col gap-7 overflow-y-auto overscroll-contain p-6 sm:p-8"
+      >
         <div className="grid gap-7 @md:grid-cols-2 @md:gap-6">
           <div className="flex flex-col gap-2">
             <Label htmlFor={`${ids}-birth`} className="label gap-0">
@@ -290,7 +298,7 @@ export function ProfileForm({ now, initial, onDone }: { now: number; initial?: P
           </Button>
         )}
       </form>
-    </section>
+    </div>
   );
 }
 

@@ -1,0 +1,120 @@
+/*
+ * The profile dialog opens as a stepped shutter deploying downward and closes
+ * by retracting upward, with a glowing seam riding the moving edge. One
+ * animatable custom property drives both the clip and the seam, so the line
+ * always sits exactly on the cut. Base UI keeps the popup mounted until the
+ * closing animation ends.
+ */
+
+@property --reveal {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 100%;
+}
+
+.popup {
+  /* Negative side insets keep the reticle corners (1px outside the frame) uncut. */
+  clip-path: inset(-3px -3px calc(100% - var(--reveal)) -3px);
+}
+
+.popup::after {
+  content: "";
+  position: absolute;
+  inset-inline: -1px;
+  top: calc(var(--reveal) - 2px);
+  height: 2px;
+  background: var(--glow);
+  box-shadow:
+    0 0 10px var(--glow),
+    0 0 28px rgb(61 255 110 / 0.6);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.popup[data-open] {
+  animation:
+    deploy 640ms steps(12, jump-end),
+    flicker 300ms steps(5, jump-end);
+}
+.popup[data-closed] {
+  animation:
+    retract 380ms steps(8, jump-end) forwards,
+    glitch 160ms steps(4, jump-end);
+}
+.popup[data-open]::after {
+  animation: seam 640ms steps(1, jump-end);
+}
+.popup[data-closed]::after {
+  animation: seam 380ms steps(1, jump-end);
+}
+
+.backdrop {
+  transition: opacity 240ms steps(4, jump-end);
+}
+.backdrop[data-starting-style],
+.backdrop[data-ending-style] {
+  opacity: 0;
+}
+
+@keyframes deploy {
+  from {
+    --reveal: 0%;
+  }
+  to {
+    --reveal: 100%;
+  }
+}
+
+@keyframes retract {
+  from {
+    --reveal: 100%;
+  }
+  to {
+    --reveal: 0%;
+  }
+}
+
+/* Keeps the seam lit for the whole move, then off. */
+@keyframes seam {
+  from,
+  to {
+    opacity: 1;
+  }
+}
+
+/* `transform`, not `translate`: centering already uses the `translate` property. */
+@keyframes glitch {
+  25% {
+    transform: translateX(-4px);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+  75% {
+    transform: translateX(-1px);
+  }
+}
+
+@keyframes flicker {
+  20% {
+    opacity: 0.55;
+  }
+  40% {
+    opacity: 1;
+  }
+  60% {
+    opacity: 0.75;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .popup[data-open],
+  .popup[data-closed],
+  .popup[data-open]::after,
+  .popup[data-closed]::after {
+    animation: none;
+  }
+  .backdrop {
+    transition: none;
+  }
+}
