@@ -1,26 +1,267 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Dark/light are both first-class: the clock is legible either way, the neon
+   glow is a dark-mode-only flourish layered on top (see .digits and .cta). */
+@custom-variant dark (&:is(.dark *));
 
 :root {
+  --glow: #15803d;
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #18181b;
+  --card: #fafafa;
+  --card-foreground: #18181b;
+  --popover: #ffffff;
+  --popover-foreground: #18181b;
+  --primary: var(--glow);
+  --primary-foreground: #ffffff;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #52525b;
+  --accent: #f0fdf4;
+  --accent-foreground: #14532d;
+  --destructive: #dc2626;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: var(--glow);
+  --radius: 0.625rem;
+  --grid-line: rgb(21 128 61 / 0.08);
+}
+
+.dark {
+  --glow: #3dff6e;
+  --background: #000000;
+  --foreground: #e4e4e7;
+  --card: #09090b;
+  --card-foreground: #e4e4e7;
+  --popover: #0c0c0e;
+  --popover-foreground: #e4e4e7;
+  --primary: var(--glow);
+  --primary-foreground: #000000;
+  --secondary: #18181b;
+  --secondary-foreground: #e4e4e7;
+  --muted: #18181b;
+  --muted-foreground: #a1a1aa;
+  --accent: #1f1f23;
+  --accent-foreground: #fafafa;
+  --destructive: #ff5c5c;
+  --border: #27272a;
+  --input: #27272a;
+  --grid-line: rgb(61 255 110 / 0.07);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: var(--font-clock);
+  --font-heading: var(--font-geist-sans);
+  --color-glow: var(--glow);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    color-scheme: light;
+    background: var(--background);
+    @apply font-sans;
+  }
+  .dark {
+    color-scheme: dark;
+  }
+  body {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgb(21 128 61 / 0.05), transparent 70%),
+      var(--background);
+    background-repeat: no-repeat;
+    @apply text-foreground;
+  }
+  .dark body {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgb(61 255 110 / 0.07), transparent 70%),
+      var(--background);
+    background-repeat: no-repeat;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .digits {
+    font-family: var(--font-clock), ui-monospace, monospace;
+    font-size: clamp(2.25rem, 9vw, 5.5rem);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+    color: var(--glow);
+  }
+  /* The neon look is a dark-room effect; on a white page a glowing blur just
+     looks like a rendering glitch, so light mode keeps the digits flat. */
+  .dark .digits {
+    text-shadow:
+      0 0 6px rgb(61 255 110 / 0.7),
+      0 0 24px rgb(61 255 110 / 0.35);
+  }
+
+
+  /* Card-style radio: the whole tile is the hit target, the Base UI radio stays for a11y. */
+  .choice {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    border-radius: 0.6rem;
+    border: 1px solid var(--border);
+    background: var(--card);
+    padding: 0.8rem 1rem;
+    color: var(--muted-foreground);
+    transition: border-color 150ms ease, color 150ms ease;
+  }
+  .choice:has([data-checked]) {
+    border-color: var(--glow);
+    color: var(--glow);
+  }
+
+  .cta {
+    padding-inline: 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: transform 150ms ease, box-shadow 150ms ease;
+  }
+  .cta:hover {
+    background: var(--glow);
+  }
+  .dark .cta {
+    box-shadow: 0 0 24px rgb(61 255 110 / 0.35);
+  }
+  .dark .cta:hover {
+    box-shadow: 0 0 36px rgb(61 255 110 / 0.55);
+  }
+
+  .dark .life-bar-fill {
+    box-shadow: 0 0 12px var(--glow);
+  }
+
+  /* --- HUD: the futuristic chrome around the landing and results ---------- */
+
+  /* Faint measurement grid that fades out towards the edges. */
+  .hud-grid {
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 70% 60% at 30% 40%, #000 30%, transparent 100%);
+  }
+
+  /* Panel with targeting-reticle corners instead of a full outline. */
+  .hud-frame {
+    position: relative;
+    border: 1px solid var(--border);
+    background: color-mix(in oklab, var(--card) 70%, transparent);
+    backdrop-filter: blur(8px);
+  }
+  .hud-frame::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    pointer-events: none;
+    --c: var(--glow);
+    background:
+      linear-gradient(var(--c), var(--c)) top left / 16px 2px no-repeat,
+      linear-gradient(var(--c), var(--c)) top left / 2px 16px no-repeat,
+      linear-gradient(var(--c), var(--c)) top right / 16px 2px no-repeat,
+      linear-gradient(var(--c), var(--c)) top right / 2px 16px no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom left / 16px 2px no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom left / 2px 16px no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom right / 16px 2px no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom right / 2px 16px no-repeat;
+  }
+
+  /* Monospace system tag with a live status dot. */
+  .hud-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--font-clock), ui-monospace, monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
+  .hud-tag::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--glow);
+    box-shadow: 0 0 8px var(--glow);
+    animation: hud-pulse 1.6s ease-in-out infinite;
+  }
+
+  .step-index {
+    font-family: var(--font-clock), ui-monospace, monospace;
+    color: var(--glow);
+    letter-spacing: 0.05em;
+  }
+
+  .scroll-cue svg {
+    animation: hud-nudge 1.8s ease-in-out infinite;
+  }
+}
+
+@keyframes hud-pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@keyframes hud-nudge {
+  50% {
+    transform: translateY(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-tag::before,
+  .scroll-cue svg {
+    animation: none;
+  }
+}
+
+/* Unlayered on purpose: it must beat shadcn Label's text-sm/font-medium utilities
+   so every step heading matches. */
+.label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
 }
