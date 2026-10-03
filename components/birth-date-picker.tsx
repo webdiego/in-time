@@ -73,7 +73,7 @@ export const BirthDatePicker = memo(function BirthDatePicker({
             variant="outline"
             aria-invalid={invalid || undefined}
             aria-describedby={describedBy}
-            className="h-12 w-full justify-between rounded-lg bg-card px-4 text-base font-normal"
+            className="h-9 w-full justify-between rounded-lg border-input bg-card px-3 text-sm font-normal"
           />
         }
       >

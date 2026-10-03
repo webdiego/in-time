@@ -1,12 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { ArrowRightIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HeroBackground } from "@/components/hero-background";
-
-// UN World Population Prospects 2024: roughly 61–62 million deaths a year worldwide.
-const DEATHS_PER_SECOND = 61.7e6 / (365.2425 * 24 * 3600);
 
 // Backed by this app's own numbers, not fabricated: see life-expectancy.json (Nigeria
 // vs. Hong Kong, among countries of 1M+ people), lib/lifestyle.ts's hazard ratios, and
@@ -27,16 +23,7 @@ const FACTS = [
 ];
 
 /** Home: a single hero. "Start" opens the profile dialog over it. */
-export function Landing({
-  now,
-  onStart,
-}: {
-  now: number;
-  onStart: () => void;
-}) {
-  const [openedAt] = useState(now);
-  const stopped = Math.floor(((now - openedAt) / 1000) * DEATHS_PER_SECOND);
-
+export function Landing({ onStart }: { onStart: () => void }) {
   return (
     <div className="relative flex w-full flex-1 flex-col">
       <div
@@ -78,11 +65,7 @@ export function Landing({
             </div>
 
             <p className="max-w-md font-mono text-xs text-muted-foreground">
-              While you&apos;ve been reading this, about{" "}
-              <span className="text-foreground tabular-nums" aria-live="off">
-                {stopped}
-              </span>{" "}
-              {stopped === 1 ? "life" : "lives"} ended somewhere in the world.
+              You can&apos;t save time, only spend it. The only choice is on what.
             </p>
 
             <Button

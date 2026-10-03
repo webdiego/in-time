@@ -37,7 +37,7 @@ export function CountryCombobox({
       itemToStringValue={(o) => o.code}
       autoHighlight
     >
-      <ComboboxInput id={id} placeholder="Search for a country…" triggerLabel="Show all countries" className="h-12 w-full bg-card px-2 *:text-base" />
+      <ComboboxInput id={id} placeholder="Search for a country…" triggerLabel="Show all countries" className="h-9 w-full bg-card px-2 *:text-sm" />
       <ComboboxContent>
         <ComboboxEmpty>No country found.</ComboboxEmpty>
         <ComboboxList>

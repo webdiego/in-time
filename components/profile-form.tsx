@@ -207,7 +207,7 @@ export function ProfileForm({ now, initial, onDone }: { now: number; initial?: P
                       max={250}
                       value={height}
                       onChange={(e) => setHeight(e.target.value)}
-                      className="h-11 bg-card px-3 text-base md:text-base"
+                      className="h-9 bg-card px-3 text-sm md:text-sm"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -223,7 +223,7 @@ export function ProfileForm({ now, initial, onDone }: { now: number; initial?: P
                       step="0.1"
                       value={weight}
                       onChange={(e) => setWeight(e.target.value)}
-                      className="h-11 bg-card px-3 text-base md:text-base"
+                      className="h-9 bg-card px-3 text-sm md:text-sm"
                     />
                   </div>
                 </div>
@@ -339,7 +339,7 @@ function NumberField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-invalid={invalid || undefined}
-        className="h-11 bg-card px-3 font-mono text-base md:text-base"
+        className="h-9 bg-card px-3 font-mono text-sm md:text-sm"
       />
     </div>
   );

@@ -30,7 +30,7 @@ export default function InTime() {
           </div>
         </div>
       ) : (
-        <Landing now={now} onStart={() => setDialogOpen(true)} />
+        <Landing onStart={() => setDialogOpen(true)} />
       )}
       <ProfileDialog open={dialogOpen} onOpenChange={setDialogOpen} now={now} initial={profile} />
     </>

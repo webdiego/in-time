@@ -27,7 +27,7 @@ export function HeroBackground() {
     <FaultyTerminal
       className="h-full w-full"
       tint="#3dff6e"
-      brightness={0.55}
+      brightness={0.75}
       // Slower and calmer: the defaults read as a busy, repetitive glitch tic
       // within a few seconds of watching it; this stretches that period out
       // and softens the flicker/displacement so it sits in the background
