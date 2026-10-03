@@ -70,7 +70,7 @@ export function Landing({ onStart }: { onStart: () => void }) {
 
             <Button
               onClick={onStart}
-              className="cta h-12 self-start rounded-full px-5"
+              className="cta h-12 gap-2.5 self-start rounded-full px-7 font-mono text-sm tracking-[0.14em] uppercase active:scale-[0.98]"
             >
               Start
               <ArrowRightIcon aria-hidden />

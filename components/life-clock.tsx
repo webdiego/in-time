@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ShareIcon } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { CheckIcon, Loader2Icon, ShareIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { TimeBreakdown } from "@/components/time-breakdown";
@@ -153,9 +153,16 @@ export function LifeClock({
   const personalised = estimate.byFactor.length > 0;
   const lifestyleDelta = estimate.personal - estimate.average;
 
-  const [sharing, setSharing] = useState<"idle" | "busy" | "downloaded">(
-    "idle",
-  );
+  const [sharing, setSharing] = useState<
+    "idle" | "busy" | "downloaded" | "error"
+  >("idle");
+  // Desktop has no share sheet, so the image is saved silently: show the
+  // outcome on the button for a moment, then go back to the call to action.
+  useEffect(() => {
+    if (sharing !== "downloaded" && sharing !== "error") return;
+    const id = setTimeout(() => setSharing("idle"), 3000);
+    return () => clearTimeout(id);
+  }, [sharing]);
   async function share() {
     setSharing("busy");
     try {
@@ -169,7 +176,7 @@ export function LifeClock({
         (await shareOrDownload(blob)) === "downloaded" ? "downloaded" : "idle",
       );
     } catch {
-      setSharing("idle");
+      setSharing("error");
     }
   }
 
@@ -244,13 +251,33 @@ export function LifeClock({
         <Button
           onClick={share}
           disabled={sharing === "busy"}
-          className="cta h-12 rounded-full"
+          className={`cta h-12 gap-2.5 rounded-full px-7 font-mono text-sm tracking-[0.14em] uppercase active:scale-[0.98] ${
+            sharing === "error"
+              ? "bg-destructive text-white hover:bg-destructive"
+              : ""
+          }`}
         >
-          <ShareIcon aria-hidden />
-          {sharing === "busy" ? "Preparing the image…" : "Share your clock"}
+          {sharing === "busy" ? (
+            <Loader2Icon className="animate-spin" aria-hidden />
+          ) : sharing === "downloaded" ? (
+            <CheckIcon aria-hidden />
+          ) : (
+            <ShareIcon aria-hidden />
+          )}
+          {sharing === "busy"
+            ? "Preparing the image…"
+            : sharing === "downloaded"
+              ? "Image saved"
+              : sharing === "error"
+                ? "Couldn't create it, try again"
+                : "Share your clock"}
         </Button>
         <p className="sr-only" aria-live="polite">
-          {sharing === "downloaded" ? "Image downloaded." : ""}
+          {sharing === "downloaded"
+            ? "Image downloaded."
+            : sharing === "error"
+              ? "Could not create the image."
+              : ""}
         </p>
       </div>
 
